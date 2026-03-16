@@ -6,7 +6,7 @@ red_led = Pin(17, Pin.OUT)   # GP 17 pin 22
 white_led = Pin(16, Pin.OUT) #GP 16  pin 21
 
 while True:
-    print("teting lights")
+    print("testing lights")
     blue_led.value(1)   # ON
     time.sleep(1)
     
