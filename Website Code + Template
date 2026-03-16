@@ -1,0 +1,125 @@
+# this is the template for the website: rough copy
+# Smart Room Energy Management System
+# Group 3 - B02 | Raspberry Pi Pico W
+
+import network
+import socket
+import machine
+import utime
+import math
+
+# ── PIN SETUP ──────────────────────────────────────────
+temp_sensor = machine.ADC(27)       # NTC thermistor on GP27
+blue_led = machine.Pin(18, machine.Pin.OUT)   # Lighting actuator
+red_led  = machine.Pin(17, machine.Pin.OUT)   # HVAC actuator
+
+# ── SENSOR FUNCTIONS ───────────────────────────────────
+def get_tempSensorValue():
+    tempSensorValue = temp_sensor.read_u16()
+    tempValue = round(((((1/(1/298+(1/3960)*math.log((65535/(tempSensorValue)-1)))) - 273)*1)),1)
+    return str(tempValue)
+
+def get_lightSensorValue():
+    # TODO: replace with your actual light sensor reading
+    return "315"
+
+def get_motionStatus():
+    # TODO: replace with your actual MMwave sensor reading
+    return "DETECTED"
+
+# ── WEBPAGE ────────────────────────────────────────────
+def web_page(tempValue, lightValue, motionStatus, ledStatus, hvacStatus):
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Room Control</title>
+  <meta http-equiv="refresh" content="5">
+</head>
+<body>
+
+  <h1>Smart Room Energy Management</h1>
+  <p>Group 3 - B02 | Raspberry Pi Pico W</p>
+  <hr>
+
+  <h2>Sensor Readings</h2>
+  <p>Temperature: {tempValue} degrees Celsius</p>
+  <p>Light Level: {lightValue} lux</p>
+  <p>Motion Status: {motionStatus}</p>
+
+  <h2>Actuator Status</h2>
+  <p>Lighting LED (Blue): {ledStatus}</p>
+  <p>HVAC LED (Red): {hvacStatus}</p>
+
+  <h2>Manual Controls</h2>
+  <a href="/?led=on"><button>Light ON</button></a>
+  <a href="/?led=off"><button>Light OFF</button></a>
+  <br><br>
+  <a href="/?hvac=on"><button>HVAC ON</button></a>
+  <a href="/?hvac=off"><button>HVAC OFF</button></a>
+
+  <h2>System Mode</h2>
+  <a href="/?mode=auto"><button>Automatic</button></a>
+  <a href="/?mode=manual"><button>Manual</button></a>
+  <a href="/?mode=vacation"><button>Vacation</button></a>
+
+</body>
+</html>"""
+    return str(html)
+
+# ── WIFI ACCESS POINT ──────────────────────────────────
+ssid     = 'GROUP_3'
+password = 'onetwothreefourfive67'
+
+ap = network.WLAN(network.AP_IF)
+ap.config(essid=ssid, password=password)
+ap.active(True)
+
+while ap.active() == False:
+    pass
+
+print('Access point active!')
+print('IP address:', ap.ifconfig()[0])
+
+# ── SOCKET SERVER ──────────────────────────────────────
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(('', 80))
+s.listen(5)
+
+# track LED states
+led_status  = "OFF"
+hvac_status = "OFF"
+
+# ── MAIN LOOP ──────────────────────────────────────────
+while True:
+    conn, addr = s.accept()
+    print('Connection from:', str(addr))
+    request = conn.recv(1024)
+    request = str(request)
+    print(request)
+
+    # check button presses from webpage
+    if '/?led=on'   in request:
+        blue_led.value(1)
+        led_status = "ON"
+    if '/?led=off'  in request:
+        blue_led.value(0)
+        led_status = "OFF"
+    if '/?hvac=on'  in request:
+        red_led.value(1)
+        hvac_status = "ON"
+    if '/?hvac=off' in request:
+        red_led.value(0)
+        hvac_status = "OFF"
+
+    # get sensor values
+    tempValue   = get_tempSensorValue()
+    lightValue  = get_lightSensorValue()
+    motionStatus = get_motionStatus()
+
+    # build and send response
+    response = web_page(tempValue, lightValue, motionStatus, led_status, hvac_status)
+    conn.send("HTTP/1.1 200 OK\n")
+    conn.send("Content-Type: text/html\n")
+    conn.send("Connection: close\n\n")
+    conn.sendall(response)
+    conn.close()
