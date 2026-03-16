@@ -20,6 +20,7 @@ def web_page(tempValue, lightValue, motionStatus, ledStatus, hvacStatus):
   <p>Lighting LED (Blue): {ledStatus}</p>
   <p>HVAC LED (Red): {hvacStatus}</p>
 
+
   <h2>Manual Controls</h2>
   <a href="/?led=on"><button>Light ON</button></a>
   <a href="/?led=off"><button>Light OFF</button></a>
