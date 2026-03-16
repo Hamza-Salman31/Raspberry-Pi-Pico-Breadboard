@@ -6,8 +6,8 @@ temp_sensor = machine.ADC(26)
 
 Vtot = 3.3
 
-R_FIXED = 10000    
-R0 = 10000           
+R_FIXED = 1000    
+R0 = 1000           
 T0 = 298.15       
 B = 3950             
 
