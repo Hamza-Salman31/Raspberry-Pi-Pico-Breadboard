@@ -19,6 +19,9 @@ while True:
 
     voltage = raw * Vtot / 65535
 
+    if voltage <= 0 or voltage >= Vtot:
+        return None
+
     resistance = R_FIXED * voltage / (Vtot - voltage)
 
     tempK = 1 / ((1/T0) + (1/B) * math.log(resistance / R0))
