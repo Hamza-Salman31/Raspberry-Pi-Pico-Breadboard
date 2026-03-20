@@ -1,7 +1,7 @@
 import machine
 import utime
 
-light_sensor = machine.ADC(--)
+light_sensor = machine.ADC(27)
 
 Vtot = 3.3
 
