@@ -25,9 +25,9 @@ light_sensor = machine.ADC(27)
 
 
                     #LED setup
-white_led = PIN(16, Pin.OUT)
-red_led = PIN(17, Pin.OUT)
-blue_led = PIN(18, Pin.OUT)
+white_led = Pin(16, Pin.OUT)
+red_led = Pin(17, Pin.OUT)
+blue_led = Pin(18, Pin.OUT)
 
 
 
@@ -79,11 +79,9 @@ def perfect_room():
   
   if occupied and lux <= ___:                #If room is occupied and light is dim, turn on light, otherwise keep light off
     white_led.value(1)
-  else:
-    white_led.value(0)
 
   
-  if occupied 
+  if occupied: 
     if tempC is not None:                #Safety check if light is reading values or not
       if tempC > temp_too_hot:                #If room is occupied and temp is hot, start cooling
         blue_led.value(1)
