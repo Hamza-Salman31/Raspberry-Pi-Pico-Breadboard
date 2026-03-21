@@ -59,7 +59,38 @@ def read_light():
   return lux
 
 
+                    #MM-Wave Function
+-=-=-=-=-=-=-=-=-=-=-=-=-=
 
+                    #Combination of the functions to work together based on occupancy
+
+def perfect_room():
+
+  light_threshold = ___                #lower than this, turn light on
+  temp_too_hot = 25                #higher than this, start cooling
+  temp_too_cold = 20                #lower than this, start heating
+
+  white_led.value(0)
+  red_led.value(0)
+  blue_led.value(0)
+
+  lux = read_light()
+  tempC = read_temperature()
+  
+  if occupied and lux <= ___:                #If room is occupied and light is dim, turn on light, otherwise keep light off
+    white_led.value(1)
+  else:
+    white_led.value(0)
+
+  
+  if occupied 
+    if tempC is not None:                #Safety check if light is reading values or not
+      if tempC > temp_too_hot:                #If room is occupied and temp is hot, start cooling
+        blue_led.value(1)
+      elif tempC < temp_too_cold:                #If room is occupied and temp is cold, start heating
+        red_led.value(1)
+    
+  
 
 
 
