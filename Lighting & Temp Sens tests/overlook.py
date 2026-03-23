@@ -166,7 +166,7 @@ def read_mmwave():
 
 def perfect_room():
 
-  light_threshold = ___                #lower than this, turn light on
+  light_threshold = 100                #lower than this, turn light on
   temp_too_hot = 25                #higher than this, start cooling
   temp_too_cold = 20                #lower than this, start heating
 
@@ -179,7 +179,7 @@ def perfect_room():
   lux = read_light()
   tempC = read_temperature()
   
-  if occupied and lux <= ___:                #If room is occupied and light is dim, turn on light, otherwise keep light off
+  if occupied and lux <= light_threshold:                #If room is occupied and light is dim, turn on light, otherwise keep light off
     white_led.value(1)
 
   
@@ -400,7 +400,7 @@ while True:
 
     data = perfect_room()
 
-    response = web_page(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], "AUTOMATIC")
+    response = web_page(data[0], data[1], data[2], data[3], data[4], data[5], data[8], data[9], data[6], data[7], "AUTOMATIC")
     conn.send("HTTP/1.1 200 OK\n")
     conn.send("Content-Type: text/html\n")
     conn.send("Connection: close\n\n")
