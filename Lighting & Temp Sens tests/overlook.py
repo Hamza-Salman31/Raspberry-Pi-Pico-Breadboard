@@ -224,20 +224,6 @@ s = socket.socket()
 s.bind(('', 80))
 s.listen(5)
 
-# ── MAIN LOOP ──────────────────────────────────────────
-while True:
-    conn, addr = s.accept()
-    request = conn.recv(1024)
-    request = str(request)
-
-    response = web_page("22.4", "315", "DETECTED", "detected", "ON", "on", "OFF", "off", "OFF", "off", "AUTOMATIC")
-    conn.send("HTTP/1.1 200 OK\n")
-    conn.send("Content-Type: text/html\n")
-    conn.send("Connection: close\n\n")
-    conn.sendall(response)
-    conn.close()
-
-
 
 def web_page(tempValue, lightValue,
              motionStatus, motionClass,
@@ -403,6 +389,25 @@ def web_page(tempValue, lightValue,
 </body>
 </html>"""
     return str(html)
+
+
+
+# ── MAIN LOOP ──────────────────────────────────────────
+while True:
+    conn, addr = s.accept()
+    request = conn.recv(1024)
+    request = str(request)
+
+    data = perfect_room()
+
+    response = web_page(data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], "AUTOMATIC")
+    conn.send("HTTP/1.1 200 OK\n")
+    conn.send("Content-Type: text/html\n")
+    conn.send("Connection: close\n\n")
+    conn.sendall(response)
+    conn.close()
+
+
 
 
 
