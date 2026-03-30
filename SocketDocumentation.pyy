@@ -1,0 +1,62 @@
+# ======================================================
+# SOCKET SERVER
+# ======================================================
+s = socket.socket() 
+#This creates a TCP socket object 
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)   
+# Allow reuse of the port immediately after restart (avoids "address in use" errors)  
+s.bind(('', 80))
+# This will bind to all network interfaces on port 80 (standard HTTP port)
+s.listen(5)
+# Allow up to 5 queued incoming connections
+s.settimeout(0.2)
+# Non-blocking accept: times out after 0.2s so the main loop keeps running
+print('Web server ready at http://{}/'.format(ip_address))
+print('Starting room test...')
+
+last_log_ms = time.ticks_ms() - LOG_INTERVAL_MS # Triggering an immediate first log
+
+try:
+    while True:
+        now = time.ticks_ms()
+        # Periodically read sensors and print state to serial (every LOG_INTERVAL_MS)(sensor readings getting printed to code)
+        if time.ticks_diff(now, last_log_ms) >= LOG_INTERVAL_MS:
+            latest_state = update_system_state()
+            print_state(latest_state)
+            last_log_ms = now
+
+        try:
+            # Wait for an incoming HTTP connection (returns after 0.2s if none)
+            conn, addr = s.accept()
+            # Read the raw HTTP request (up to 1024 bytes)
+            request = conn.recv(1024)
+            # Decode bytes to string; default to empty string if nothing received
+            request_text = request.decode('utf-8') if request else ''
+            # Parse the request for button actions (e.g. mode changes) and apply them
+
+            handle_actions(request_text)
+            # Re-read sensors so the dashboard reflects the latest state immediately
+
+            # Refresh state immediately after a button press
+            latest_state = update_system_state()
+            # Build the HTML page with current state injected
+
+            # Send HTTP response headers followed by the HTML body
+            response = web_page(latest_state)
+            conn.send('HTTP/1.1 200 OK\r\n')
+            conn.send('Content-Type: text/html\r\n')
+            conn.send('Connection: close\r\n\r\n')  # Blank line marks end of headers
+            conn.sendall(response)
+            conn.close()  # Close the connection after sending (HTTP/1.1 short-lived)
+
+        except OSError:
+            # Timeout on s.accept() raises OSError — expected, just continue the loop
+            pass
+
+        time.sleep_ms(50)   # Small delay to prevent busy-looping and reduce CPU load
+
+except KeyboardInterrupt:
+    # Clean shutdown: turn off all outputs, close socket, notify via serial
+    set_outputs(False, False, False)
+    s.close()
+    print('System stopped.')
