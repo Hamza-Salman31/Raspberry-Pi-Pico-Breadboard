@@ -9,7 +9,7 @@ from machine import Pin
 # WIFI ACCESS POINT
 # ======================================================
 ssid = 'GROUP_3'
-password = 'stickitin'
+password = 'stickitin'                                #Password
 
 ap = network.WLAN(network.AP_IF)
 ap.config(essid=ssid, password=password)
@@ -28,18 +28,18 @@ print('IP address:', ip_address)
 Vtot = 3.3
 
                                 # Temp sensor setup for GP26
-temp_sensor = machine.ADC(26)
-TEMP_R_FIXED = 10000
-TEMP_R0 = 100000
-TEMP_T0 = 298.15
-TEMP_B = 4014
+temp_sensor = machine.ADC(26)            #Pin to connect
+TEMP_R_FIXED = 10000                #Resistance of resistor in circuit
+TEMP_R0 = 100000                    #Resistance of resistor in circuit
+TEMP_T0 = 298.15                    #Reference temperature
+TEMP_B = 4014                        #Beta value for equation
 
                                 # Light sensor setup for GP27
-light_sensor = machine.ADC(27)
-LIGHT_R_FIXED = 10000
-R_REF = 7300.0
-LUX_REF = 300.0
-GAMMA = 1.7
+light_sensor = machine.ADC(27)           #Pin to connect
+LIGHT_R_FIXED = 10000                    #Resistance of resistor in circuit
+R_REF = 7300.0                            #Reference resistance at reference lux
+LUX_REF = 300.0                            #Reference lux
+GAMMA = 1.7                                #Gamma value for equation
 
                                 # MM-wave on UART0
 uart = machine.UART(0, baudrate=256000, tx=machine.Pin(0), rx=machine.Pin(1))
@@ -57,9 +57,9 @@ last_valid_ms = 0
 last_uart_ms = time.ticks_ms()
 
                                 # LEDs
-white_led = Pin(16, Pin.OUT)   # lighting
-red_led = Pin(17, Pin.OUT)     # heating
-blue_led = Pin(18, Pin.OUT)    # cooling
+white_led = Pin(16, Pin.OUT)           # lighting
+red_led = Pin(17, Pin.OUT)             # heating
+blue_led = Pin(18, Pin.OUT)            # cooling
 
 # ======================================================
 # CONTROL SETTINGS
@@ -67,14 +67,14 @@ blue_led = Pin(18, Pin.OUT)    # cooling
 LIGHT_THRESHOLD = 100
 TEMP_TOO_HOT = 30                    #Test value 30, actual value 25
 TEMP_TOO_COLD = 26                    #Test value 26, actual value 20
-LOG_INTERVAL_MS = 1000
+LOG_INTERVAL_MS = 1000                #Updating interval in milliseconds
 
-system_mode = 'AUTOMATIC'
-manual_white = False
-manual_red = False
-manual_blue = False
+system_mode = 'AUTOMATIC'            #Standard and initial setting is Automatic
+manual_white = False                  #Allows for manual control, but inital set up is automatic
+manual_red = False                    #Allows for manual control, but inital set up is automatic
+manual_blue = False                   #Allows for manual control, but inital set up is automatic
 
-latest_state = {
+latest_state = {                       #Starts up the system given that no values have been recorded yet
     'tempC': None,
     'lux': None,
     'motionStatus': 'NONE',
@@ -95,39 +95,39 @@ latest_state = {
                                 #Function to read the temperature and return the current room temperature in C
 def read_temperature():
     total = 0
-    for _ in range(20):
+    for _ in range(20):                                #Takes 20 readings to create less disruptive results (some values might be incorrect)
         total += temp_sensor.read_u16()
         time.sleep_ms(10)
 
-    raw = total / 20
-    voltage = raw * Vtot / 65535
+    raw = total / 20                                    #Takes the 20 readings and makes it into 1 value (converts 20 to an accurate average)
+    voltage = raw * Vtot / 65535                        #Converts the ADC resistance value to a useable voltage reading
 
-    if voltage <= 0 or voltage >= Vtot:
+    if voltage <= 0 or voltage >= Vtot:                    #Safety check, makes sure the function does not crash
         return None
 
-    resistance = TEMP_R_FIXED * voltage / (Vtot - voltage)
-    tempK = 1 / ((1 / TEMP_T0) + (1 / TEMP_B) * math.log(resistance / TEMP_R0))
+    resistance = TEMP_R_FIXED * voltage / (Vtot - voltage)                #Converts the voltage reading to a usable resistance value
+    tempK = 1 / ((1 / TEMP_T0) + (1 / TEMP_B) * math.log(resistance / TEMP_R0))        #Converts the resistance into a presentable temperature K value, compares to known values and scales accordingly
     return tempK - 273.15
 
                                 #Function to read the lighting level and return the current light level in lux
 def read_light():
     total = 0
-    for _ in range(20):
+    for _ in range(20):                                #Takes 20 readings to create less disruptive results (some values might be incorrect)
         total += light_sensor.read_u16()
         time.sleep_ms(5)
 
-    raw = total / 20
-    voltage = raw * Vtot / 65535
+    raw = total / 20                                    #Takes the 20 readings and makes it into 1 value (converts 20 to an accurate average)
+    voltage = raw * Vtot / 65535                        #Converts the ADC resistance value to a useable voltage reading
 
-    if voltage >= Vtot or voltage <= 0:
+    if voltage >= Vtot or voltage <= 0:                #Safety check, makes sure the function does not crash
         return None
 
-    resistance = LIGHT_R_FIXED * voltage / (Vtot - voltage)
-    lux = LUX_REF * (R_REF / resistance) ** GAMMA
+    resistance = LIGHT_R_FIXED * voltage / (Vtot - voltage)            #Converts the voltage reading to a usable resistance value
+    lux = LUX_REF * (R_REF / resistance) ** GAMMA                      #Converts the resistance into a presentable lux value, compares to known ratio and applies a curve
     return lux
 
 
-def le16(b0, b1):
+def le16(b0, b1):                                #Combines 8-bit bytes into 16-bit numbers
     return b0 | (b1 << 8)
 
                                 #Function to determine occupancy, reads whether there is motion and returns the occupancy status
