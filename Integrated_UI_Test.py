@@ -202,8 +202,8 @@ def read_mmwave():
 # ======================================================
 # WEB PAGE
 # ======================================================
-def web_page(state):
-    tempC = state['tempC']
+def web_page(state):                                #Takes all values from latest_state and assigns the values of the current system to be used in the webpage
+    tempC = state['tempC']                              #Latest_state reads the values while this function assigns the read values to the webpage
     lightValue = state['lux']
     motionStatus = state['motionStatus']
     motionClass = state['motionClass']
@@ -216,39 +216,39 @@ def web_page(state):
     modeStatus = state['modeStatus']
     conditions = state['conditions']
 
-    if blueLedStatus == 'ON':
-        alertStyle = 'display:block'
+    if blueLedStatus == 'ON':                                                #Alerts the HTML that the temperature is too hot, so cooling needs to be activated, based on LED status
+        alertStyle = 'display:block'   
         alertText = 'High temperature detected! HVAC cooling activated.'
-    elif redLedStatus == 'ON':
+    elif redLedStatus == 'ON':                                                #Alerts the HTML that the temperature is too cold, so heating needs to be activated, based on LED status
         alertStyle = 'display:block'
         alertText = 'Low temperature detected! HVAC heating activated.'
-    else:
+    else:                                                                     #Makes no change to the system if the temperautre is within the comfort range, based on LED status
         alertStyle = 'display:none'
         alertText = ''
 
-    if tempC is None:
+    if tempC is None:                                         #Determines whether the temperature is valid or not, shows an error if it is not
         tempDisplay = 'ERR'
         tempBadge = 'ERROR'
         tempClass = 'off'
-    elif tempC >= TEMP_TOO_HOT:
+    elif tempC >= TEMP_TOO_HOT:                                #Gives the HTML a usable temperature and status for when the temperature is too high
         tempDisplay = str(round(tempC, 2))
         tempBadge = 'HOT'
         tempClass = 'hot'
-    elif tempC <= TEMP_TOO_COLD:
+    elif tempC <= TEMP_TOO_COLD:                                #Gives the HTML a usable temperature and status for when the temperature is too low
         tempDisplay = str(round(tempC, 2))
         tempBadge = 'COLD'
         tempClass = 'detected'
-    else:
+    else:                                                     #Gives the HTML a usable temperature value and status for when the temperature is within the confort zone
         tempDisplay = str(round(tempC, 2))
         tempBadge = 'NORMAL'
         tempClass = 'normal'
 
-    if lightValue is None:
+    if lightValue is None:                                    #Gives the HTML an error if the light value is not useable
         lightDisplay = 'ERR'
     else:
-        lightDisplay = str(round(lightValue, 1))
+        lightDisplay = str(round(lightValue, 1))                #Gives the HTML a light value in lux to be presented on the website
 
-    condition_html = ''.join(
+    condition_html = ''.join(                                     #Sets up the live conditions for the HTML
         '<div class="status-row"><span class="label">&bull;</span><span>{}</span></div>'.format(item)
         for item in conditions
     )
@@ -386,98 +386,98 @@ def web_page(state):
 # ======================================================
 # REQUEST HANDLING
 # ======================================================
-def handle_actions(request_text):
-    global system_mode, manual_white, manual_red, manual_blue
+def handle_actions(request_text):                                    #Executes the manual commands from the web page
+    global system_mode, manual_white, manual_red, manual_blue         #Defines the variables that can be manually changed, the LEDs can be changed based on the system mode
 
-    if '/?mode=auto' in request_text:
-        system_mode = 'AUTOMATIC'
+    if '/?mode=auto' in request_text:                                #Checks whether the request is valid for execution of request
+        system_mode = 'AUTOMATIC'                                #Sets the system mode to automatic
     elif '/?mode=manual' in request_text:
-        system_mode = 'MANUAL OVERRIDE'
+        system_mode = 'MANUAL OVERRIDE'                         #Sets the system mode to manual override
     elif '/?mode=vacation' in request_text:
-        system_mode = 'VACATION MODE'
+        system_mode = 'VACATION MODE'                             #Sets the system mode to vacation mode
 
-    if '/?light=on' in request_text:
-        manual_white = True
+    if '/?light=on' in request_text:                                #Checks whether the request is valid for execution of request
+        manual_white = True                                #Turns the light on if the button is pressed
     elif '/?light=off' in request_text:
-        manual_white = False
+        manual_white = False                                #Turns the light off if the button is pressed
 
-    if '/?hvac=heat_on' in request_text:
-        manual_red = True
+    if '/?hvac=heat_on' in request_text:                           #Checks whether the request is valid for execution of request
+        manual_red = True                                #Turns the heating on and cooling off if manual heating is pressed
         manual_blue = False
     elif '/?hvac=heat_off' in request_text:
-        manual_red = False
+        manual_red = False                                    #Turns the heating off if heating off button is pressed
 
-    if '/?hvac=cool_on' in request_text:
-        manual_blue = True
+    if '/?hvac=cool_on' in request_text:                          #Checks whether the request is valid for execution of request
+        manual_blue = True                                #Turns the cooling on and heating off if manual cooling is pressed
         manual_red = False
     elif '/?hvac=cool_off' in request_text:
-        manual_blue = False
+        manual_blue = False                                #Turns the cooling off if cooling off is pressed
 
 
-def set_outputs(white_on, red_on, blue_on):
+def set_outputs(white_on, red_on, blue_on):                    #Actually changes the LEDs on or off based on the commands from the selected system mode
     white_led.value(1 if white_on else 0)
     red_led.value(1 if red_on else 0)
     blue_led.value(1 if blue_on else 0)
 
 
-def update_system_state():
-    occupied = read_mmwave()
-    lux = read_light()
-    tempC = read_temperature()
+def update_system_state():                                #Function that reads all sensor data, controls LEDs, and gives information to the HTML
+    occupied = read_mmwave()                    #Occupancy status
+    lux = read_light()                          #Lighting level
+    tempC = read_temperature()                  #Temperature value
 
-    white_on = False
+    white_on = False                            #Initializing the conditions for the LEDs
     red_on = False
     blue_on = False
     conditions = []
 
-    if system_mode == 'AUTOMATIC':
+    if system_mode == 'AUTOMATIC':                                #Determines whether the white LED should be turned on based on occupancy and light level
         if occupied and lux is not None and lux <= LIGHT_THRESHOLD:
             white_on = True
 
-        if occupied and tempC is not None:
+        if occupied and tempC is not None:                        #Determines whether the red and blue LEDs should be turned on depending on occupancy and temperature
             if tempC > TEMP_TOO_HOT:
                 blue_on = True
             elif tempC < TEMP_TOO_COLD:
                 red_on = True
 
-    elif system_mode == 'MANUAL OVERRIDE':
+    elif system_mode == 'MANUAL OVERRIDE':                        #Activates the manual mode and manual control of the LEDs
         white_on = manual_white
         red_on = manual_red
         blue_on = manual_blue
 
-    elif system_mode == 'VACATION MODE':
+    elif system_mode == 'VACATION MODE':                            #Activates the vacation mode
         white_on = False
         red_on = False
         blue_on = False
 
-    set_outputs(white_on, red_on, blue_on)
+    set_outputs(white_on, red_on, blue_on)                        #Turns the LEDs on or off based on the values previously
 
-    conditions.append('Occupied' if occupied else 'Unoccupied')
+    conditions.append('Occupied' if occupied else 'Unoccupied')                #Changes whether the HTML shows occupied or not
 
-    if lux is None:
+    if lux is None:                                                #Sends a message to the HTML depending on the light status
         conditions.append('Light sensor error')
     elif lux <= LIGHT_THRESHOLD:
-        conditions.append('Room is dim')
+        conditions.append('Room is dim')                            #Light is too low, send appropriate message
     else:
-        conditions.append('Room is bright enough')
+        conditions.append('Room is bright enough')                 #Light is bright enough, send appropirate message
 
-    if tempC is None:
+    if tempC is None:                                        #Sends a message to the HTML depending on the temperature status
         conditions.append('Temp sensor error')
-    elif tempC > TEMP_TOO_HOT:
+    elif tempC > TEMP_TOO_HOT:                                #If the temperature is too hot, appropriate message
         conditions.append('Room is too hot')
-    elif tempC < TEMP_TOO_COLD:
+    elif tempC < TEMP_TOO_COLD:                                #If the temperature is too cold, appropriate message
         conditions.append('Room is too cold')
     else:
-        conditions.append('Room temperature is okay')
+        conditions.append('Room temperature is okay')            #Comfort temperature message
 
-    if system_mode == 'MANUAL OVERRIDE':
+    if system_mode == 'MANUAL OVERRIDE':                                #Message in HTML indicating manual mode
         conditions.append('Manual commands control the LEDs')
-    elif system_mode == 'VACATION MODE':
+    elif system_mode == 'VACATION MODE':                                #Message in HTML indicating vacation mode
         conditions.append('Vacation mode keeps all actuators off')
     else:
-        conditions.append('Automatic control active')
+        conditions.append('Automatic control active')                    #Message in HTML indicating automatic mode
 
-    return {
+    return {                                                            #Returns the status of the temperature, lights, occupancy, and the LEDs statuses to present in HTML
         'tempC': tempC,
         'lux': lux,
         'motionStatus': 'DETECTED' if occupied else 'NONE',
@@ -493,7 +493,7 @@ def update_system_state():
     }
 
 
-def print_state(state):
+def print_state(state):                                    #Function that prints all statuses to the console to keep an overview of what is happening
     print('================================')
 
     if state['tempC'] is None:
@@ -511,7 +511,7 @@ def print_state(state):
     print('Blue LED (Cooling):', state['blueStatus'])
     print('Red LED (Heating):', state['redStatus'])
     print('Mode:', state['modeStatus'])
-    print('Conditions:')
+    print('Conditions:')                                    #Conditions showing up in the HTML
     for item in state['conditions']:
         print('-', item)
     print()
