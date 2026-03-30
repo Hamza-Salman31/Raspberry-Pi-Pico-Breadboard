@@ -9,7 +9,7 @@ from machine import Pin
 # WIFI ACCESS POINT
 # ======================================================
 ssid = 'GROUP_3'
-password = 'onetwothreefourfive67'
+password = 'stickitin'
 
 ap = network.WLAN(network.AP_IF)
 ap.config(essid=ssid, password=password)
@@ -27,21 +27,21 @@ print('IP address:', ip_address)
 # ======================================================
 Vtot = 3.3
 
-# Temp sensor on GP26
+                                # Temp sensor setup for GP26
 temp_sensor = machine.ADC(26)
 TEMP_R_FIXED = 10000
 TEMP_R0 = 100000
 TEMP_T0 = 298.15
 TEMP_B = 4014
 
-# Light sensor on GP27
+                                # Light sensor setup for GP27
 light_sensor = machine.ADC(27)
 LIGHT_R_FIXED = 10000
 R_REF = 7300.0
 LUX_REF = 300.0
 GAMMA = 1.7
 
-# MM-wave on UART0
+                                # MM-wave on UART0
 uart = machine.UART(0, baudrate=256000, tx=machine.Pin(0), rx=machine.Pin(1))
 HDR = b"\xF4\xF3\xF2\xF1"
 END = b"\xF8\xF7\xF6\xF5"
@@ -56,7 +56,7 @@ FAIL_TIMEOUT_S = 5
 last_valid_ms = 0
 last_uart_ms = time.ticks_ms()
 
-# LEDs
+                                # LEDs
 white_led = Pin(16, Pin.OUT)   # lighting
 red_led = Pin(17, Pin.OUT)     # heating
 blue_led = Pin(18, Pin.OUT)    # cooling
@@ -65,8 +65,8 @@ blue_led = Pin(18, Pin.OUT)    # cooling
 # CONTROL SETTINGS
 # ======================================================
 LIGHT_THRESHOLD = 100
-TEMP_TOO_HOT = 30
-TEMP_TOO_COLD = 26
+TEMP_TOO_HOT = 30                    #Test value 30, actual value 25
+TEMP_TOO_COLD = 26                    #Test value 26, actual value 20
 LOG_INTERVAL_MS = 1000
 
 system_mode = 'AUTOMATIC'
@@ -92,6 +92,7 @@ latest_state = {
 # ======================================================
 # SENSOR FUNCTIONS
 # ======================================================
+                                #Function to read the temperature and return the current room temperature in C
 def read_temperature():
     total = 0
     for _ in range(20):
@@ -108,7 +109,7 @@ def read_temperature():
     tempK = 1 / ((1 / TEMP_T0) + (1 / TEMP_B) * math.log(resistance / TEMP_R0))
     return tempK - 273.15
 
-
+                                #Function to read the lighting level and return the current light level in lux
 def read_light():
     total = 0
     for _ in range(20):
@@ -118,7 +119,7 @@ def read_light():
     raw = total / 20
     voltage = raw * Vtot / 65535
 
-    if voltage >= Vtot:
+    if voltage >= Vtot or voltage <= 0:
         return None
 
     resistance = LIGHT_R_FIXED * voltage / (Vtot - voltage)
@@ -129,7 +130,7 @@ def read_light():
 def le16(b0, b1):
     return b0 | (b1 << 8)
 
-
+                                #Function to determine occupancy, reads whether there is motion and returns the occupancy status
 def read_mmwave():
     global buf, last_valid_ms, last_uart_ms
 
